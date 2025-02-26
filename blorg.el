@@ -44,7 +44,39 @@ Italicize if in title, otherwise emphasize."
 
 ;;;; Define the derived HTML backend
 
+;;;###autoload
+(defun blorg-html-export-as-html
+    (&optional async subtreep visible-only body-only ext-plist)
+  "Export current buffer to an HTML buffer."
+  (interactive)
+  (org-export-to-buffer 'blorg-html "*Blorg HTML Export*"
+    async subtreep visible-only body-only ext-plist
+    (lambda () (set-auto-mode t))))
+
+;;;###autoload
+(defun blorg-html-export-to-html
+    (&optional async subtreep visible-only body-only ext-plist)
+  "Export current buffer to an HTML file."
+  (interactive)
+  (let* ((extension (concat
+		     (when (> (length org-html-extension) 0) ".")
+		     (or (plist-get ext-plist :html-extension)
+			 org-html-extension
+			 "html")))
+	 (file (org-export-output-file-name extension subtreep))
+	 (org-export-coding-system org-html-coding-system))
+    (org-export-to-file 'blorg-html file
+      async subtreep visible-only body-only ext-plist)))
+
 (org-export-define-derived-backend 'blorg-html 'html
+  :menu-entry
+  '(?b "Export to Blorg HTML"
+       ((?H "As HTML buffer" blorg-html-export-as-html)
+	(?h "As HTML file" blorg-html-export-to-html)
+	(?o "As HTML file and open"
+	    (lambda (a s v b)
+	      (if a (blorg-html-export-to-html t s v b)
+		(org-open-file (blorg-html-export-to-html nil s v b)))))))
   :translate-alist
   '((italic . blorg-html-italic)))
 
