@@ -31,12 +31,16 @@
 
 ;;;; Italic
 
-(defun blorg-html-italic (_italic contents info)
+(defun blorg-html-italic (italic contents info)
   "Transcode ITALIC from Org to HTML for a blog.
 Italicize if in title, otherwise emphasize."
-  (format
-   (or (cdr (assq 'italic (plist-get info :html-text-markup-alist))) "%s")
-   contents))
+  (let* ((markup (plist-get info :html-text-markup-alist))
+         (italic-element (alist-get 'italic markup "<i>%s</i>"))
+         (emphasis-element (alist-get 'emphasis markup "<em>%s</em>"))
+         (parent-type (org-element-lineage-map italic #'org-element-type  nil nil t)))
+    (cond ((member parent-type '(headline section))
+           (format italic-element contents))
+          (t (format emphasis-element contents)))))
 
 ;;;; Define the derived HTML backend
 
