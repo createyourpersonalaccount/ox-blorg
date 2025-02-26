@@ -69,6 +69,20 @@ Italicize if in title, otherwise emphasize."
       async subtreep visible-only body-only ext-plist)))
 
 (org-export-define-derived-backend 'blorg-html 'html
+  :options-alist
+  '((:html-doctype "HTML_DOCTYPE" nil "html5")
+    (:html-html5-fancy nil "html5-fancy" t)
+    ;; The options set below are per (org)Bare HTML, for a minimal
+    ;; HTML export.
+    (:html-head nil "html-head" "")
+    (:html-head-extra nil "html-head-extra" "")
+    (:html-head-include-default-style
+     nil "html-style" nil)
+    (:html-head-include-scripts
+     nil "html-scripts" nil)
+    (:html-postamble nil "html-postamble" nil)
+    (:html-preamble nil "html-preamble" nil)
+    (:html-use-infojs nil nil nil))
   :menu-entry
   '(?b "Export to Blorg HTML"
        ((?H "As HTML buffer" blorg-html-export-as-html)
