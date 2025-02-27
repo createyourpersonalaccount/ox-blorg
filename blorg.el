@@ -48,9 +48,7 @@
            (,info-var ,info))
        (concat
         (funcall ,template-func 'begin ,info-var)
-        "\n"
         ,string
-        "\n"
         (funcall ,template-func 'end ,info-var)))))
 
 ;;;; Italic
@@ -126,6 +124,17 @@ Italicize if in title, otherwise emphasize."
     "</footer>")
    (t "")))
 
+(defun blorg-html-template-header (part info)
+  "The Blorg HTML header element template."
+  (cond
+   ((eq part 'begin)
+    (format
+     "<header><h1>%s"
+     (org-export-data (plist-get info :title) info)))
+   ((eq part 'end)
+    "</h1></header>")
+   (t "")))
+
 (defun blorg-html-template (contents info)
   "Return complete document string after HTML conversion."
   (blorg-html-aux-$<>
@@ -135,6 +144,8 @@ Italicize if in title, otherwise emphasize."
     (blorg-html-aux-$<>
      body info
      (concat
+      (blorg-html-aux-$<> header info "")
+      "\n"
       (blorg-html-aux-$<> main info contents)
       "\n"
       (blorg-html-aux-$<> footer info ""))))))
