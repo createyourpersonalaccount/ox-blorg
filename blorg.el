@@ -58,6 +58,34 @@
         "&lrm;"
       title)))
 
+;;;; Src-block
+
+(defun blorg-html-src-block (src-block _contents info)
+  "Transcode an SRC-BLOCK element from Org to HTML."
+  (let* ((lang (org-element-property :language src-block))
+	 (code (org-html-format-code src-block info))
+	 (label (let ((lbl (org-html--reference src-block info t)))
+		  (if lbl (format " id=\"%s\"" lbl) ""))))
+    (format "<div class=\"org-src-container\">\n%s%s\n</div>"
+	    ;; Build caption.
+	    (let ((caption (org-export-get-caption src-block)))
+	      (if (not caption) ""
+		(let ((listing-number
+		       (format
+			"<span class=\"listing-number\">%s </span>"
+			(format
+			 (org-export-translate "Listing %d:" :html info)
+			 (org-export-get-ordinal
+			  src-block info nil
+                          (lambda (element &optional info)
+                            (org-element-property :caption element)))))))
+		  (format "<label class=\"org-src-name\">%s%s</label>"
+			  listing-number
+			  (org-trim (org-export-data caption info))))))
+	    ;; Contents.
+            (format "<pre class=\"src src-%s\"%s><code>%s</code></pre>"
+                    lang label code))))
+
 ;;;; Italic
 
 (defun blorg-html-italic (italic contents info)
@@ -210,6 +238,7 @@ Italicize if in title, otherwise emphasize."
 		(org-open-file (blorg-html-export-to-html nil s v b)))))))
   :translate-alist
   '((italic . blorg-html-italic)
+    (src-block . blorg-html-src-block)
     (template . blorg-html-template)))
 
 (provide 'blorg)
