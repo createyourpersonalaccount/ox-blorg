@@ -51,6 +51,13 @@
         ,string
         (funcall ,template-func 'end ,info-var)))))
 
+(defun blorg-html-aux-title (info)
+  "Get the blog title."
+  (let ((title (org-export-data (plist-get info :title) info)))
+    (if (string-empty-p title)
+        "&lrm;"
+      title)))
+
 ;;;; Italic
 
 (defun blorg-html-italic (italic contents info)
@@ -82,11 +89,13 @@ Italicize if in title, otherwise emphasize."
   "The Blorg HTML head element template."
   (cond
    ((eq part 'begin)
-    "<head>
+    (format
+     "<head>
   <meta charset=\"utf-8\" />
   <meta name=\"viewport\" content=\"width=device-width\" />
-  <title>Test.</title>
-</head>")
+  <title>%s</title>
+</head>"
+     (blorg-html-aux-title info)))
    ((eq part 'end)
     "")
    (t "")))
@@ -130,7 +139,7 @@ Italicize if in title, otherwise emphasize."
    ((eq part 'begin)
     (format
      "<header><h1>%s"
-     (org-export-data (plist-get info :title) info)))
+     (blorg-html-aux-title info)))
    ((eq part 'end)
     "</h1></header>")
    (t "")))
