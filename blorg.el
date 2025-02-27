@@ -187,6 +187,23 @@ Italicize if in title, otherwise emphasize."
       "\n"
       (blorg-html-aux-$<> footer info ""))))))
 
+;;;; Publish
+
+(defun blorg-html-publish-to-html (plist filename pub-dir)
+  "Publish an org file to HTML.
+
+FILENAME is the filename of the Org file to be published.  PLIST
+is the property list for the given project.  PUB-DIR is the
+publishing directory.
+
+Return output file name."
+  (org-publish-org-to 'blorg-html filename
+		      (concat (when (> (length org-html-extension) 0) ".")
+			      (or (plist-get plist :html-extension)
+				  org-html-extension
+				  "html"))
+		      plist pub-dir))
+
 ;;;; Define the derived HTML backend
 
 ;;;###autoload
