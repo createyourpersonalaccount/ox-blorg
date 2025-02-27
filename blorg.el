@@ -91,8 +91,8 @@ Italicize if in title, otherwise emphasize."
    ((eq part 'begin)
     (format
      "<head>
-  <meta charset=\"utf-8\" />
-  <meta name=\"viewport\" content=\"width=device-width\" />
+  <meta charset=\"utf-8\">
+  <meta name=\"viewport\" content=\"width=device-width\">
   <title>%s</title>
 </head>"
      (blorg-html-aux-title info)))
