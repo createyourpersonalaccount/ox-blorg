@@ -38,17 +38,20 @@
            (mapcar #'symbol-name
                    ',symbols))))
 
-(defmacro blorg-html-aux-$<> (element string)
+(defmacro blorg-html-aux-$<> (element info string)
   "Encloses STRING in ELEMENT from template."
-  (let ((template-func (make-symbol "template-func")))
+  (let ((template-func (make-symbol "template-func"))
+        (info-var (make-symbol "info-var")))
     `(let ((,template-func
-            (blorg-html-aux-append-symbols blorg-html-template- ,element)))
+            (blorg-html-aux-append-symbols blorg-html-template-
+                                           ,element))
+           (,info-var ,info))
        (concat
-        (funcall ,template-func 'begin)
+        (funcall ,template-func 'begin ,info-var)
         "\n"
         ,string
         "\n"
-        (funcall ,template-func 'end)))))
+        (funcall ,template-func 'end ,info-var)))))
 
 ;;;; Italic
 
@@ -58,14 +61,16 @@ Italicize if in title, otherwise emphasize."
   (let* ((markup (plist-get info :html-text-markup-alist))
          (italic-element (alist-get 'italic markup "<i>%s</i>"))
          (emphasis-element (alist-get 'emphasis markup "<em>%s</em>"))
-         (parent-type (org-element-lineage-map italic #'org-element-type  nil nil t)))
+         (parent-type
+          (org-element-lineage-map italic #'org-element-type
+            nil nil t)))
     (cond ((member parent-type '(headline section))
            (format italic-element contents))
           (t (format emphasis-element contents)))))
 
 ;;;; Template
 
-(defun blorg-html-template-document (part)
+(defun blorg-html-template-document (part info)
   "The Blorg HTML document template."
   (cond
    ((eq part 'begin)
@@ -75,7 +80,7 @@ Italicize if in title, otherwise emphasize."
     "</html>")
    (t "")))
 
-(defun blorg-html-template-head (part)
+(defun blorg-html-template-head (part info)
   "The Blorg HTML head element template."
   (cond
    ((eq part 'begin)
@@ -88,28 +93,51 @@ Italicize if in title, otherwise emphasize."
     "")
    (t "")))
 
-(defun blorg-html-template-body (part)
+(defun blorg-html-template-body (part info)
   "The Blorg HTML body element template."
   (cond
    ((eq part 'begin)
-    "<body>
-  <main>
-    <article>")
+    "<body>")
+   ((eq part 'end)
+    "</body>")
+   (t "")))
+
+(defun blorg-html-template-main (part info)
+  "The Blorg HTML main and article element template."
+  (cond
+   ((eq part 'begin)
+    "<main>
+  <article>")
    ((eq part 'end)
     "</article>
-  </main>
-</body>")
+</main>")
+   (t "")))
+
+(defun blorg-html-template-footer (part info)
+  "The Blorg HTML footer element template."
+  (cond
+   ((eq part 'begin)
+    (format
+     "<footer>
+  <p class=\"copyright-notice\">Copyright &copy; <span>%s</span>, <a href=\"mailto:%s\">contact</a>.</p>"
+     (org-export-data (plist-get info :author) info)
+     (plist-get info :email)))
+   ((eq part 'end)
+    "</footer>")
    (t "")))
 
 (defun blorg-html-template (contents info)
   "Return complete document string after HTML conversion."
   (blorg-html-aux-$<>
-   document
+   document info
    (blorg-html-aux-$<>
-    head
+    head info
     (blorg-html-aux-$<>
-     body
-     contents))))
+     body info
+     (concat
+      (blorg-html-aux-$<> main info contents)
+      "\n"
+      (blorg-html-aux-$<> footer info ""))))))
 
 ;;;; Define the derived HTML backend
 
