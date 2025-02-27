@@ -29,6 +29,27 @@
 
 ;;; Blorg HTML backend
 
+;;;; Auxiliary
+
+(defmacro blorg-html-aux-append-symbols (&rest symbols)
+  "Append an arbitrary number of SYMBOLS into a new symbol."
+  `(intern
+    (apply 'concat
+           (mapcar #'symbol-name
+                   ',symbols))))
+
+(defmacro blorg-html-aux-$<> (element string)
+  "Encloses STRING in ELEMENT from template."
+  (let ((template-func (make-symbol "template-func")))
+    `(let ((,template-func
+            (blorg-html-aux-append-symbols blorg-html-template- ,element)))
+       (concat
+        (funcall ,template-func 'begin)
+        "\n"
+        ,string
+        "\n"
+        (funcall ,template-func 'end)))))
+
 ;;;; Italic
 
 (defun blorg-html-italic (italic contents info)
@@ -41,6 +62,54 @@ Italicize if in title, otherwise emphasize."
     (cond ((member parent-type '(headline section))
            (format italic-element contents))
           (t (format emphasis-element contents)))))
+
+;;;; Template
+
+(defun blorg-html-template-document (part)
+  "The Blorg HTML document template."
+  (cond
+   ((eq part 'begin)
+    "<!doctype html>
+<html lang=\"en-US\">")
+   ((eq part 'end)
+    "</html>")
+   (t "")))
+
+(defun blorg-html-template-head (part)
+  "The Blorg HTML head element template."
+  (cond
+   ((eq part 'begin)
+    "<head>
+  <meta charset=\"utf-8\" />
+  <meta name=\"viewport\" content=\"width=device-width\" />
+  <title>Test.</title>
+</head>")
+   ((eq part 'end)
+    "")
+   (t "")))
+
+(defun blorg-html-template-body (part)
+  "The Blorg HTML body element template."
+  (cond
+   ((eq part 'begin)
+    "<body>
+  <main>
+    <article>")
+   ((eq part 'end)
+    "</article>
+  </main>
+</body>")
+   (t "")))
+
+(defun blorg-html-template (contents info)
+  "Return complete document string after HTML conversion."
+  (blorg-html-aux-$<>
+   document
+   (blorg-html-aux-$<>
+    head
+    (blorg-html-aux-$<>
+     body
+     contents))))
 
 ;;;; Define the derived HTML backend
 
@@ -92,7 +161,8 @@ Italicize if in title, otherwise emphasize."
 	      (if a (blorg-html-export-to-html t s v b)
 		(org-open-file (blorg-html-export-to-html nil s v b)))))))
   :translate-alist
-  '((italic . blorg-html-italic)))
+  '((italic . blorg-html-italic)
+    (template . blorg-html-template)))
 
 (provide 'blorg)
 
