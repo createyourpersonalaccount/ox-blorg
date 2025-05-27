@@ -113,6 +113,28 @@ Italicize if in title, otherwise emphasize."
     "</html>")
    (t "")))
 
+;;; This is taken from ox-html.
+(defun blorg-html-build-mathjax-config (info)
+  "Insert the user setup into the mathjax template."
+  (if (not (and (memq (plist-get info :with-latex) '(mathjax t))
+                (org-element-map (plist-get info :parse-tree)
+                    '(latex-fragment latex-environment) #'identity info t nil t)))
+      ""
+    (let ((template (plist-get info :html-mathjax-template))
+          (options (plist-get info :html-mathjax-options))
+          (in-buffer (or (plist-get info :html-mathjax) "")))
+      (dolist (e options (org-element-normalize-string template))
+        (let ((symbol (car e))
+              (value (cadr e)))
+          (when value
+            (while (string-match (format "\\(%%%s\\)[^A-Z]"
+                                         (upcase (symbol-name symbol)))
+                                 template)
+              (setq template
+                    (replace-match (format "%s" value)
+                                   t
+                                   t template 1)))))))))
+
 (defun blorg-html-template-head (part info)
   "The Blorg HTML head element template."
   (cond
@@ -122,8 +144,10 @@ Italicize if in title, otherwise emphasize."
   <meta charset=\"utf-8\">
   <meta name=\"viewport\" content=\"width=device-width\">
   <title>%s</title>
+  %s
 </head>"
-     (blorg-html-aux-title info)))
+     (blorg-html-aux-title info)
+     (blorg-html-build-mathjax-config info)))
    ((eq part 'end)
     "")
    (t "")))
