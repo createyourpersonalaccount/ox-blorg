@@ -55,7 +55,7 @@
   "Get the blog title."
   (let ((title (org-export-data (plist-get info :title) info)))
     (if (string-empty-p title)
-        "&lrm;"
+        "&lrm;"                         ; <title> shouldn't be empty
       title)))
 
 ;;;; Src-block
