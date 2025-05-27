@@ -145,9 +145,11 @@ Italicize if in title, otherwise emphasize."
   <meta name=\"viewport\" content=\"width=device-width\">
   <title>%s</title>
   %s
+  %s
 </head>"
      (blorg-html-aux-title info)
-     (blorg-html-build-mathjax-config info)))
+     (blorg-html-build-mathjax-config info)
+     (or (plist-get info :html-head) "")))
    ((eq part 'end)
     "")
    (t "")))
