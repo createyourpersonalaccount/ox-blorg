@@ -58,6 +58,12 @@
         "&lrm;"                         ; <title> shouldn't be empty
       title)))
 
+(defun ensure-suffix (suffix string)
+  "Append SUFFIX to STRING unless STRING already ends in SUFFIX."
+  (if (string-suffix-p suffix string)
+      string
+    (concat string suffix)))
+
 ;;;; Src-block
 
 (defun blorg-html-src-block (src-block _contents info)
@@ -230,6 +236,29 @@ Return output file name."
 				  "html"))
 		      plist pub-dir))
 
+;;;; Custom blorg links
+
+(defun org-blorg-link-export (link description _ info)
+  "Export a blorg page link from Org files."
+  (let* ((new-link (replace-regexp-in-string "\\.org$" ".html" link))
+         (desc (or description new-link))
+         (blorg-root (plist-get info :blorg-root))
+         (path (if blorg-root
+                   (concat (ensure-suffix "/" blorg-root)
+                           new-link)
+                 new-link)))
+    (format "<a href=\"%s\">%s</a>" path desc)))
+
+;;; locate-dominating-file for publish.el
+(defun org-blorg-link-follow (path _)
+  (let ((root-dir (locate-dominating-file "." "index.org")))
+    (find-file (concat (if root-dir (ensure-suffix "/" root-dir) "")
+                       path))))
+
+(org-link-set-parameters "blorg"
+                         :follow #'org-blorg-link-follow
+                         :export #'org-blorg-link-export)
+
 ;;;; Define the derived HTML backend
 
 ;;;###autoload
@@ -270,7 +299,8 @@ Return output file name."
      nil "html-scripts" nil)
     (:html-postamble nil "html-postamble" nil)
     (:html-preamble nil "html-preamble" nil)
-    (:html-use-infojs nil nil nil))
+    (:html-use-infojs nil nil nil)
+    (:blorg-root nil nil nil))
   :menu-entry
   '(?b "Export to Blorg HTML"
        ((?H "As HTML buffer" blorg-html-export-as-html)
