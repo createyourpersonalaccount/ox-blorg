@@ -151,7 +151,7 @@ Do as ox-html does, but also include the DONE timestamp."
   (unless (re-search-forward "^#\\+print_bibliography:" nil t)
     (goto-char (point-max))
     (unless (bolp) (insert "\n"))
-    (insert "#+print_bibliography:\n")))
+    (insert "* References\n#+print_bibliography:\n")))
 
 (unless blorg-bibliography-hook-added
   (add-hook 'org-export-before-processing-functions #'blorg-attach-bibliography)
