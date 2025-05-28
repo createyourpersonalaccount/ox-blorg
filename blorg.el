@@ -140,17 +140,24 @@ Do as ox-html does, but also include the DONE timestamp."
             machine-date
 	    (replace-regexp-in-string "--" "&#x2013;" date))))
 
-;;;; Template
+;;;; Bibliography
 
-(defun blorg-html-template-document (part info)
-  "The Blorg HTML document template."
-  (cond
-   ((eq part 'begin)
-    "<!doctype html>
-<html lang=\"en-US\">")
-   ((eq part 'end)
-    "</html>")
-   (t "")))
+(defvar blorg-bibliography-hook-added nil
+  "Track if the hook to attach bibliography has been added.")
+
+(defun blorg-attach-bibliography (backend)
+  "Attach relevant bibliographic information to current buffer."
+  ;; Write #+print_bibliography: at end unless already existing.
+  (unless (re-search-forward "^#\\+print_bibliography:" nil t)
+    (goto-char (point-max))
+    (unless (bolp) (insert "\n"))
+    (insert "#+print_bibliography:\n")))
+
+(unless blorg-bibliography-hook-added
+  (add-hook 'org-export-before-processing-functions #'blorg-attach-bibliography)
+  (setq blorg-bibliography-hook-added t))
+
+;;;; MathJax
 
 ;;; This is taken from ox-html.
 (defun blorg-html-build-mathjax-config (info)
@@ -173,6 +180,18 @@ Do as ox-html does, but also include the DONE timestamp."
                     (replace-match (format "%s" value)
                                    t
                                    t template 1)))))))))
+
+;;;; Template
+
+(defun blorg-html-template-document (part info)
+  "The Blorg HTML document template."
+  (cond
+   ((eq part 'begin)
+    "<!doctype html>
+<html lang=\"en-US\">")
+   ((eq part 'end)
+    "</html>")
+   (t "")))
 
 (defun blorg-html-template-head (part info)
   "The Blorg HTML head element template."
