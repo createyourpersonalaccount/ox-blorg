@@ -330,6 +330,24 @@ Return output file name."
                          :follow #'org-blorg-link-follow
                          :export #'org-blorg-link-export)
 
+;;;; Body filter hook
+
+(defvar blorg-body-hook-added nil
+  "Track if the hook to filter body has been added.")
+
+;; Unfortunately oc-csl adds a <style> element in the body. We remove
+;; it as style elements shouldn't be placed there. See
+;; <https://lists.gnu.org/archive/html/emacs-orgmode/2025-05/msg00336.html>
+(defun blorg-body-remove-csl-style (str _ _)
+  "Remove <style> (added by oc-csl) from bibliography."
+  (replace-regexp-in-string "<style>\\.csl-left-margin[^<]*</style>"
+                            ""
+                            str))
+
+(unless blorg-body-hook-added
+  (add-hook 'org-export-filter-body-functions #'blorg-body-remove-csl-style)
+  (setq blorg-body-hook-added t))
+
 ;;;; Define the derived HTML backend
 
 ;;;###autoload
