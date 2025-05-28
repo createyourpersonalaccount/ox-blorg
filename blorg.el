@@ -73,6 +73,17 @@
                 machine-date date)
       "")))
 
+(defun blorg-get-root (info)
+  "Grab the :blorg-root string (empty if unspecified)."
+  (let ((blorg-root (plist-get info :blorg-root)))
+    (if blorg-root
+        (ensure-suffix "/" blorg-root)
+      "")))
+
+(defun blorg-get-header (info)
+  "Grab the :blorg-header string (empty if unspecified)."
+  (or (plist-get info :blorg-header) ""))
+
 ;;;; Src-block
 
 (defun blorg-html-src-block (src-block _contents info)
@@ -259,19 +270,23 @@ Do as ox-html does, but also include the DONE timestamp."
 
 (defun blorg-html-template-header (part info)
   "The Blorg HTML header element template."
-  (cond
-   ((eq part 'begin)
-    (format
-     "<header><h1 class=\"article-title\">%s"
-     (blorg-html-aux-title info)))
-   ((eq part 'end)
-    (format "</h1><span class=\"article-date\">%s</span></header>"
-            (let ((timestamp (and (plist-get info :with-date)
-                                  (org-export-get-date info))))
-              (if timestamp
-                  (time-element-from-timestamp (car timestamp) info)
-                ""))))
-   (t "")))
+  (let ((blorg-root (blorg-get-root info))
+        (blorg-header (blorg-get-header info)))
+    (cond
+     ((eq part 'begin)
+      (format
+       "<header><h1 class=\"article-title\">%s"
+       (blorg-html-aux-title info)))
+     ((eq part 'end)
+      (format "</h1>%s%s</header>"
+              (let ((timestamp (and (plist-get info :with-date)
+                                    (org-export-get-date info))))
+                (format "<span class=\"article-date\">%s</span>"
+                        (if timestamp
+                            (time-element-from-timestamp (car timestamp) info)
+                          "")))
+              blorg-header))
+     (t ""))))
 
 ;;;;; Putting it together
 
@@ -313,11 +328,8 @@ Return output file name."
   "Export a blorg page link from Org files."
   (let* ((new-link (replace-regexp-in-string "\\.org$" ".html" link))
          (desc (or description new-link))
-         (blorg-root (plist-get info :blorg-root))
-         (path (if blorg-root
-                   (concat (ensure-suffix "/" blorg-root)
-                           new-link)
-                 new-link)))
+         (path (concat (blorg-get-root info)
+                       new-link)))
     (format "<a href=\"%s\">%s</a>" path desc)))
 
 ;;;;; locate-dominating-file for publish.el
@@ -389,7 +401,8 @@ Return output file name."
     (:html-postamble nil "html-postamble" nil)
     (:html-preamble nil "html-preamble" nil)
     (:html-use-infojs nil nil nil)
-    (:blorg-root nil nil nil))
+    (:blorg-root nil nil nil)
+    (:blorg-header nil nil nil))
   :menu-entry
   '(?b "Export to Blorg HTML"
        ((?H "As HTML buffer" blorg-html-export-as-html)
