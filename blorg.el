@@ -107,6 +107,22 @@ Italicize if in title, otherwise emphasize."
            (format italic-element contents))
           (t (format emphasis-element contents)))))
 
+;;;; Headline
+
+(defun blorg-html-headline (headline contents info)
+  "Transcode a HEADLINE from Org to HTML for a blog.
+Do as ox-html does, but also include the DONE timestamp."
+  (let ((todo (org-element-property :todo-keyword headline))
+        (closed (org-element-property :closed headline))
+        (html-headline (org-html-headline headline contents info)))
+    (if (and (string= todo "DONE") closed)
+        (replace-regexp-in-string
+         (regexp-quote "DONE</span>")
+         (format "DONE(%s)</span>"
+                 (org-timestamp-format closed "%Y-%m-%d"))
+         html-headline)
+      html-headline)))
+
 ;;;; Template
 
 (defun blorg-html-template-document (part info)
@@ -312,6 +328,7 @@ Return output file name."
   :translate-alist
   '((italic . blorg-html-italic)
     (src-block . blorg-html-src-block)
+    (headline . blorg-html-headline)
     (template . blorg-html-template)))
 
 (provide 'blorg)
