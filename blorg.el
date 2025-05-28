@@ -194,7 +194,7 @@ Do as ox-html does, but also include the DONE timestamp."
 
 ;;;; Template
 
-;;;;; Doctype and HTML
+;;;;; Doctype and HTML elements
 
 (defun blorg-html-template-document (part info)
   "The Blorg HTML document template."
@@ -206,7 +206,7 @@ Do as ox-html does, but also include the DONE timestamp."
     "</html>")
    (t "")))
 
-;;;;; Head
+;;;;; Head element
 
 (defun blorg-html-template-head (part info)
   "The Blorg HTML head element template."
@@ -227,7 +227,7 @@ Do as ox-html does, but also include the DONE timestamp."
     "")
    (t "")))
 
-;;;;; Body
+;;;;; Body element
 
 (defun blorg-html-template-body (part info)
   "The Blorg HTML body element template."
@@ -238,7 +238,7 @@ Do as ox-html does, but also include the DONE timestamp."
     "</body>")
    (t "")))
 
-;;;;; Main
+;;;;; Main element
 
 (defun blorg-html-template-main (part info)
   "The Blorg HTML main and article element template."
@@ -251,7 +251,7 @@ Do as ox-html does, but also include the DONE timestamp."
 </main>")
    (t "")))
 
-;;;;; Footer
+;;;;; Footer element
 
 (defun blorg-html-template-footer (part info)
   "The Blorg HTML footer element template."
@@ -287,6 +287,8 @@ Do as ox-html does, but also include the DONE timestamp."
                           "")))
               blorg-header))
      (t ""))))
+;;;;; Header element
+
 
 ;;;;; Putting it together
 
