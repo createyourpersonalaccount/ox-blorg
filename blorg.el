@@ -64,6 +64,15 @@
       string
     (concat string suffix)))
 
+(defun time-element-from-timestamp (timestamp info)
+  "Get an HTML <time> element describing the TIMESTAMP."
+  (let* ((date (org-timestamp-format timestamp "%b %d, %Y"))
+         (machine-date (and date (org-timestamp-format timestamp "%Y-%m-%d"))))
+    (if timestamp
+        (format "<time datetime=\"%s\">%s</time>"
+                machine-date date)
+      "")))
+
 ;;;; Src-block
 
 (defun blorg-html-src-block (src-block _contents info)
@@ -113,15 +122,23 @@ Italicize if in title, otherwise emphasize."
   "Transcode a HEADLINE from Org to HTML for a blog.
 Do as ox-html does, but also include the DONE timestamp."
   (let ((todo (org-element-property :todo-keyword headline))
-        (closed (org-element-property :closed headline))
+        (closed-timestamp (org-element-property :closed headline))
         (html-headline (org-html-headline headline contents info)))
-    (if (and (string= todo "DONE") closed)
+    (if (and (string= todo "DONE") closed-timestamp)
         (replace-regexp-in-string
          (regexp-quote "DONE</span>")
-         (format "DONE(%s)</span>"
-                 (org-timestamp-format closed "%Y-%m-%d"))
+         (format "DONE(%s)</span>" (time-element-from-timestamp closed-timestamp info))
          html-headline)
       html-headline)))
+
+;;;; Timestamp
+
+(defun blorg-html-timestamp (timestamp _ info)
+  (let ((date (org-html-plain-text (org-timestamp-translate timestamp) info))
+        (machine-date (org-timestamp-format timestamp "%Y-%m-%d")))
+    (format "<span class=\"timestamp-wrapper\"><span class=\"timestamp\"><time datetime=\"%s\">%s</time></span></span>"
+            machine-date
+	    (replace-regexp-in-string "--" "&#x2013;" date))))
 
 ;;;; Template
 
@@ -217,7 +234,12 @@ Do as ox-html does, but also include the DONE timestamp."
      "<header><h1>%s"
      (blorg-html-aux-title info)))
    ((eq part 'end)
-    "</h1></header>")
+    (format "</h1>%s</header>"
+            (let ((timestamp (and (plist-get info :with-date)
+                                  (org-export-get-date info))))
+              (if timestamp
+                  (time-element-from-timestamp (car timestamp) info)
+                ""))))
    (t "")))
 
 (defun blorg-html-template (contents info)
@@ -329,6 +351,7 @@ Return output file name."
   '((italic . blorg-html-italic)
     (src-block . blorg-html-src-block)
     (headline . blorg-html-headline)
+    (timestamp . blorg-html-timestamp)
     (template . blorg-html-template)))
 
 (provide 'blorg)
