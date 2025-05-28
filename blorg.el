@@ -159,7 +159,7 @@ Do as ox-html does, but also include the DONE timestamp."
 
 ;;;; MathJax
 
-;;; This is taken from ox-html.
+;; This is taken from ox-html
 (defun blorg-html-build-mathjax-config (info)
   "Insert the user setup into the mathjax template."
   (if (not (and (memq (plist-get info :with-latex) '(mathjax t))
@@ -183,6 +183,8 @@ Do as ox-html does, but also include the DONE timestamp."
 
 ;;;; Template
 
+;;;;; Doctype and HTML
+
 (defun blorg-html-template-document (part info)
   "The Blorg HTML document template."
   (cond
@@ -192,6 +194,8 @@ Do as ox-html does, but also include the DONE timestamp."
    ((eq part 'end)
     "</html>")
    (t "")))
+
+;;;;; Head
 
 (defun blorg-html-template-head (part info)
   "The Blorg HTML head element template."
@@ -212,6 +216,8 @@ Do as ox-html does, but also include the DONE timestamp."
     "")
    (t "")))
 
+;;;;; Body
+
 (defun blorg-html-template-body (part info)
   "The Blorg HTML body element template."
   (cond
@@ -220,6 +226,8 @@ Do as ox-html does, but also include the DONE timestamp."
    ((eq part 'end)
     "</body>")
    (t "")))
+
+;;;;; Main
 
 (defun blorg-html-template-main (part info)
   "The Blorg HTML main and article element template."
@@ -231,6 +239,8 @@ Do as ox-html does, but also include the DONE timestamp."
     "</article>
 </main>")
    (t "")))
+
+;;;;; Footer
 
 (defun blorg-html-template-footer (part info)
   "The Blorg HTML footer element template."
@@ -245,21 +255,25 @@ Do as ox-html does, but also include the DONE timestamp."
     "</footer>")
    (t "")))
 
+;;;;; Header
+
 (defun blorg-html-template-header (part info)
   "The Blorg HTML header element template."
   (cond
    ((eq part 'begin)
     (format
-     "<header><h1>%s"
+     "<header><h1 class=\"article-title\">%s"
      (blorg-html-aux-title info)))
    ((eq part 'end)
-    (format "</h1>%s</header>"
+    (format "</h1><span class=\"article-date\">%s</span></header>"
             (let ((timestamp (and (plist-get info :with-date)
                                   (org-export-get-date info))))
               (if timestamp
                   (time-element-from-timestamp (car timestamp) info)
                 ""))))
    (t "")))
+
+;;;;; Putting it together
 
 (defun blorg-html-template (contents info)
   "Return complete document string after HTML conversion."
@@ -306,7 +320,7 @@ Return output file name."
                  new-link)))
     (format "<a href=\"%s\">%s</a>" path desc)))
 
-;;; locate-dominating-file for publish.el
+;;;;; locate-dominating-file for publish.el
 (defun org-blorg-link-follow (path _)
   (let ((root-dir (locate-dominating-file "." "index.org")))
     (find-file (concat (if root-dir (ensure-suffix "/" root-dir) "")
