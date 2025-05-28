@@ -84,6 +84,11 @@
   "Grab the :blorg-header string (empty if unspecified)."
   (or (plist-get info :blorg-header) ""))
 
+(defun blorg-replace-root-link (string info)
+  "Replace instances of blorg: in STRING."
+  (let ((blorg-root (blorg-get-root info)))
+    (replace-regexp-in-string "blorg:" blorg-root string)))
+
 ;;;; Src-block
 
 (defun blorg-html-src-block (src-block _contents info)
@@ -177,9 +182,13 @@ Do as ox-html does, but also include the DONE timestamp."
                 (org-element-map (plist-get info :parse-tree)
                     '(latex-fragment latex-environment) #'identity info t nil t)))
       ""
-    (let ((template (plist-get info :html-mathjax-template))
-          (options (plist-get info :html-mathjax-options))
-          (in-buffer (or (plist-get info :html-mathjax) "")))
+    (let* ((template (plist-get info :html-mathjax-template))
+           (options (plist-get info :html-mathjax-options))
+           (in-buffer (or (plist-get info :html-mathjax) ""))
+           (mathjax-path (alist-get 'path options)))
+      (if mathjax-path
+          (setf (alist-get 'path options)
+                (list (blorg-replace-root-link (car mathjax-path) info))))
       (dolist (e options (org-element-normalize-string template))
         (let ((symbol (car e))
               (value (cadr e)))
@@ -210,22 +219,24 @@ Do as ox-html does, but also include the DONE timestamp."
 
 (defun blorg-html-template-head (part info)
   "The Blorg HTML head element template."
-  (cond
-   ((eq part 'begin)
-    (format
-     "<head>
+  (let ((blorg-root (blorg-get-root info))
+        (html-head (or (plist-get info :html-head) "")))
+    (cond
+     ((eq part 'begin)
+      (format
+       "<head>
   <meta charset=\"utf-8\">
   <meta name=\"viewport\" content=\"width=device-width\">
   <title>%s</title>
   %s
   %s
 </head>"
-     (blorg-html-aux-title info)
-     (blorg-html-build-mathjax-config info)
-     (or (plist-get info :html-head) "")))
-   ((eq part 'end)
-    "")
-   (t "")))
+       (blorg-html-aux-title info)
+       (blorg-html-build-mathjax-config info)
+       (blorg-replace-root-link html-head info)))
+     ((eq part 'end)
+      "")
+     (t ""))))
 
 ;;;;; Body element
 
@@ -266,7 +277,7 @@ Do as ox-html does, but also include the DONE timestamp."
     "</footer>")
    (t "")))
 
-;;;;; Header
+;;;;; Header element
 
 (defun blorg-html-template-header (part info)
   "The Blorg HTML header element template."
@@ -285,10 +296,8 @@ Do as ox-html does, but also include the DONE timestamp."
                         (if timestamp
                             (time-element-from-timestamp (car timestamp) info)
                           "")))
-              blorg-header))
+              (blorg-replace-root-link blorg-header info)))
      (t ""))))
-;;;;; Header element
-
 
 ;;;;; Putting it together
 
