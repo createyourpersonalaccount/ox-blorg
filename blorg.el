@@ -89,6 +89,78 @@
   (let ((blorg-root (blorg-get-root info)))
     (replace-regexp-in-string "blorg:" blorg-root string)))
 
+(defun blorg-mappend (function list)
+  (apply #'append (mapcar function list)))
+
+;;;; Sitemap function
+
+(defun blorg-manipulate-sitemap-files (files)
+  "Transform the FILES of :sitemap-function into a better form."
+  (when files
+    (cond
+     ((symbolp (car files))
+      (mapcar #'blorg-manipulate-sitemap-files (cdr files)))
+     ((and (stringp (car files)) (cdr files))
+      (cons (car files) (blorg-manipulate-sitemap-files (cadr files))))
+     ((and (stringp (car files)))
+      (car files)))))
+
+(defun blorg-manipulate-sitemap-separate-files (files &optional subsequent-run)
+  "Separate the files from the directories."
+  (when files
+    (let ((files (remove nil
+                         (mapcar (lambda (x) (when (stringp x) x)) files)))
+          (directories (remove nil
+                               (mapcar (lambda (x) (when (listp x) x)) files))))
+      (cons files directories))))
+
+(defun blorg-format-directory-for-sitemap (entry)
+  "Format a directory for the sitemap"
+  (capitalize (replace-regexp-in-string "-" " " entry)))
+
+(defun blorg-render-sitemap-item (item depth)
+  "Render according to DEPTH and type of ITEM (file or directory)."
+  (concat
+   (if (> depth 0)
+       (make-string (* 2 depth) ? )
+     "")
+   (format "- %s\n"
+           (if (not (string-prefix-p "[[file:" item))
+               (blorg-format-directory-for-sitemap item)
+             ;; Files have their file: links replaced with blorg:
+             ;; links.
+             (concat "[[blorg:"
+                     (substring item (length "[[file:")))))))
+
+(defun blorg-render-sitemap-from-files (files &optional depth subsequent-run)
+  "Render the sitemap list from FILES."
+  (if (null files)
+      ""
+    (let* ((depth (or depth 0))
+           (all-files (blorg-manipulate-sitemap-separate-files files))
+           (top-files (if (not subsequent-run)
+                          (car all-files)
+                        (cdar all-files)))
+           (top-directory (when subsequent-run
+                            (caar all-files)))
+           (directories (cdr all-files)))
+      (concat
+       (if (null top-directory)
+           ""
+         (blorg-render-sitemap-item top-directory (1- depth)))
+       (mapconcat (lambda (f) (blorg-render-sitemap-item f depth))
+                  top-files)
+       (mapconcat (lambda (f) (blorg-render-sitemap-from-files f (1+ depth) t))
+                  directories)))))
+
+(defun blorg-sitemap-function (title files)
+  "Pass this to :sitemap-function in your project configuration."
+  (let ((org-settings (format "#+TITLE: %s\n#+OPTIONS: toc:nil num:nil\n" title))
+        (files (blorg-manipulate-sitemap-files files)))
+    (concat
+     org-settings
+     (blorg-render-sitemap-from-files files))))
+
 ;;;; Src-block
 
 (defun blorg-html-src-block (src-block _contents info)
