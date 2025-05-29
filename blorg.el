@@ -247,6 +247,26 @@ Do as ox-html does, but also include the DONE timestamp."
   (add-hook 'org-export-before-processing-functions #'blorg-attach-bibliography)
   (setq blorg-bibliography-hook-added t))
 
+;;;; LaTeX macros
+
+(defvar blorg-latex-hook-added nil
+  "Track if the hook to attach LaTeX macros has been added.")
+
+(defun blorg-attach-latex (backend)
+  "Attach LaTeX macro template to current buffer."
+  (let* ((root-dir (locate-dominating-file "." "index.org"))
+         (macro-file (concat (if root-dir (ensure-suffix "/" root-dir) "")
+                             "latex-template")))
+    (when (file-readable-p macro-file)
+      (re-search-forward "^[^#+]" nil t)
+      (beginning-of-line)
+      (insert
+       (format "#+INCLUDE: %s\n" macro-file)))))
+
+(unless blorg-latex-hook-added
+  (add-hook 'org-export-before-processing-functions #'blorg-attach-latex)
+  (setq blorg-latex-hook-added t))
+
 ;;;; MathJax
 
 ;; This is taken from ox-html
