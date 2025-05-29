@@ -20,7 +20,7 @@
 ;; Author: Nikolaos Chatzikonstantinou
 ;; URL: https://github.com/createyourpersonalaccount/ox-blorg
 ;; Created: 2025
-;; Version: 1.1
+;; Version: 1.1.1
 ;; Keywords: outlines org blog
 ;; Package-Requires: ((emacs "30.1"))
 
@@ -91,20 +91,20 @@
       "")))
 
 (defun ox-blorg-get-root (info)
-  "Grab the :ox-blorg-root string (empty if unspecified)."
-  (let ((ox-blorg-root (plist-get info :ox-blorg-root)))
+  "Grab the :blorg-root string (empty if unspecified)."
+  (let ((ox-blorg-root (plist-get info :blorg-root)))
     (if ox-blorg-root
         (ox-blorg-ensure-suffix "/" ox-blorg-root)
       "")))
 
 (defun ox-blorg-get-header (info)
-  "Grab the :ox-blorg-header string (empty if unspecified)."
-  (or (plist-get info :ox-blorg-header) ""))
+  "Grab the :blorg-header string (empty if unspecified)."
+  (or (plist-get info :blorg-header) ""))
 
 (defun ox-blorg-replace-root-link (string info)
-  "Replace instances of ox-blorg: in STRING."
+  "Replace instances of blorg: in STRING."
   (let ((ox-blorg-root (ox-blorg-get-root info)))
-    (replace-regexp-in-string "ox-blorg:" ox-blorg-root string)))
+    (replace-regexp-in-string "blorg:" ox-blorg-root string)))
 
 (defun ox-blorg-mappend (function list)
   "Apply FUNCTION to elements of LIST and concatenate results."
@@ -145,9 +145,9 @@
    (format "- %s\n"
            (if (not (string-prefix-p "[[file:" item))
                (ox-blorg-format-directory-for-sitemap item)
-             ;; Files have their file: links replaced with ox-blorg:
+             ;; Files have their file: links replaced with blorg:
              ;; links.
-             (concat "[[ox-blorg:"
+             (concat "[[blorg:"
                      (substring item (length "[[file:")))))))
 
 (defun ox-blorg-render-sitemap-from-files (files &optional depth subsequent-run)
@@ -464,7 +464,7 @@ Return output file name."
     (find-file (concat (if root-dir (ox-blorg-ensure-suffix "/" root-dir) "")
                        path))))
 
-(org-link-set-parameters "ox-blorg"
+(org-link-set-parameters "blorg"
                          :follow #'ox-blorg-link-follow
                          :export #'ox-blorg-link-export)
 
@@ -527,8 +527,8 @@ Return output file name."
     (:html-postamble nil "html-postamble" nil)
     (:html-preamble nil "html-preamble" nil)
     (:html-use-infojs nil nil nil)
-    (:ox-blorg-root nil nil nil)
-    (:ox-blorg-header nil nil nil))
+    (:blorg-root nil nil nil)
+    (:blorg-header nil nil nil))
   :menu-entry
   '(?b "Export to Ox-Blorg HTML"
        ((?H "As HTML buffer" ox-blorg-html-export-as-html)
