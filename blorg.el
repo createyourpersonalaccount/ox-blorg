@@ -163,8 +163,10 @@ Do as ox-html does, but also include the DONE timestamp."
 
 (defun blorg-attach-bibliography (backend)
   "Attach relevant bibliographic information to current buffer."
-  ;; Write #+print_bibliography: at end unless already existing.
-  (unless (re-search-forward "^#\\+print_bibliography:" nil t)
+  ;; Write #+print_bibliography: at end unless already existing. Do
+  ;; not write it if no citations have been made.
+  (when (and (re-search-forward "\\[cite\\(/style\\)?:" nil t)
+             (not (re-search-forward "^#\\+print_bibliography:" nil t)))
     (goto-char (point-max))
     (unless (bolp) (insert "\n"))
     (insert "* References\n#+print_bibliography:\n")))
@@ -343,7 +345,7 @@ Return output file name."
                        new-link)))
     (format "<a href=\"%s\">%s</a>" path desc)))
 
-;;;;; locate-dominating-file for publish.el
+;;;;; locate-dominating-file for index.org
 (defun org-blorg-link-follow (path _)
   (let ((root-dir (locate-dominating-file "." "index.org")))
     (find-file (concat (if root-dir (ensure-suffix "/" root-dir) "")
