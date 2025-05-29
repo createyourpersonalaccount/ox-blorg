@@ -153,9 +153,9 @@
        (mapconcat (lambda (f) (blorg-render-sitemap-from-files f (1+ depth) t))
                   directories)))))
 
-(defun blorg-sitemap-function (title files)
+(defun blorg-sitemap-function (_ files)
   "Pass this to :sitemap-function in your project configuration."
-  (let ((org-settings (format "#+TITLE: %s\n#+OPTIONS: toc:nil num:nil\n" title))
+  (let ((org-settings (format "#+TITLE: Sitemap\n#+OPTIONS: toc:nil num:nil\n"))
         (files (blorg-manipulate-sitemap-files files)))
     (concat
      org-settings
