@@ -1,6 +1,6 @@
-;;; blorg.el --- Your blog in Org -*- lexical-binding: t; -*-
+;;; ox-blorg.el --- Your blog in Org -*- lexical-binding: t; -*-
 
-;; blorg.el, Your blog in Org
+;; ox-blorg.el, Your blog in Org
 ;; Copyright (C) 2025  Nikolaos Chatzikonstantinou
 ;;
 ;; This program is free software: you can redistribute it and/or modify
@@ -18,9 +18,9 @@
 
 ;; Copyright (C) 2025 Nikolaos Chatzikonstantinou <nchatz314@gmail.com>
 ;; Author: Nikolaos Chatzikonstantinou
-;; URL: https://github.com/createyourpersonalaccount/blorg
+;; URL: https://github.com/createyourpersonalaccount/ox-blorg
 ;; Created: 2025
-;; Version: 1.0.2
+;; Version: 1.1
 ;; Keywords: outlines org blog
 ;; Package-Requires: ((emacs "30.1"))
 
@@ -39,49 +39,49 @@
 (require 'ox)
 (require 'ox-publish)
 
-(defgroup blorg nil
+(defgroup ox-blorg nil
   "Your blog in Org."
   :tag "Org Export Blog"
   :group 'org-export)
 
-;;; Blorg HTML backend
+;;; Ox-Blorg HTML backend
 
 ;;;; Auxiliary
 
-(defmacro blorg-html-aux-append-symbols (&rest symbols)
+(defmacro ox-blorg-html-aux-append-symbols (&rest symbols)
   "Append an arbitrary number of SYMBOLS into a new symbol."
   `(intern
     (apply 'concat
            (mapcar #'symbol-name
                    ',symbols))))
 
-(defmacro blorg-html-aux-$<> (element info string)
+(defmacro ox-blorg-html-aux-$<> (element info string)
   "Encloses STRING in ELEMENT from template."
   (let ((template-func (make-symbol "template-func"))
         (info-var (make-symbol "info-var")))
     `(let ((,template-func
-            (blorg-html-aux-append-symbols blorg-html-template-
-                                           ,element))
+            (ox-blorg-html-aux-append-symbols ox-blorg-html-template-
+                                              ,element))
            (,info-var ,info))
        (concat
         (funcall ,template-func 'begin ,info-var)
         ,string
         (funcall ,template-func 'end ,info-var)))))
 
-(defun blorg-html-aux-title (info)
+(defun ox-blorg-html-aux-title (info)
   "Get the blog title."
   (let ((title (org-export-data (plist-get info :title) info)))
     (if (string-empty-p title)
         "&lrm;"                         ; <title> shouldn't be empty
       title)))
 
-(defun blorg-ensure-suffix (suffix string)
+(defun ox-blorg-ensure-suffix (suffix string)
   "Append SUFFIX to STRING unless STRING already ends in SUFFIX."
   (if (string-suffix-p suffix string)
       string
     (concat string suffix)))
 
-(defun blorg-time-element-from-timestamp (timestamp info)
+(defun ox-blorg-time-element-from-timestamp (timestamp info)
   "Get an HTML <time> element describing the TIMESTAMP."
   (let* ((date (org-timestamp-format timestamp "%b %d, %Y"))
          (machine-date (and date (org-timestamp-format timestamp "%Y-%m-%d"))))
@@ -90,40 +90,40 @@
                 machine-date date)
       "")))
 
-(defun blorg-get-root (info)
-  "Grab the :blorg-root string (empty if unspecified)."
-  (let ((blorg-root (plist-get info :blorg-root)))
-    (if blorg-root
-        (blorg-ensure-suffix "/" blorg-root)
+(defun ox-blorg-get-root (info)
+  "Grab the :ox-blorg-root string (empty if unspecified)."
+  (let ((ox-blorg-root (plist-get info :ox-blorg-root)))
+    (if ox-blorg-root
+        (ox-blorg-ensure-suffix "/" ox-blorg-root)
       "")))
 
-(defun blorg-get-header (info)
-  "Grab the :blorg-header string (empty if unspecified)."
-  (or (plist-get info :blorg-header) ""))
+(defun ox-blorg-get-header (info)
+  "Grab the :ox-blorg-header string (empty if unspecified)."
+  (or (plist-get info :ox-blorg-header) ""))
 
-(defun blorg-replace-root-link (string info)
-  "Replace instances of blorg: in STRING."
-  (let ((blorg-root (blorg-get-root info)))
-    (replace-regexp-in-string "blorg:" blorg-root string)))
+(defun ox-blorg-replace-root-link (string info)
+  "Replace instances of ox-blorg: in STRING."
+  (let ((ox-blorg-root (ox-blorg-get-root info)))
+    (replace-regexp-in-string "ox-blorg:" ox-blorg-root string)))
 
-(defun blorg-mappend (function list)
+(defun ox-blorg-mappend (function list)
   "Apply FUNCTION to elements of LIST and concatenate results."
   (apply #'append (mapcar function list)))
 
 ;;;; Sitemap function
 
-(defun blorg-manipulate-sitemap-files (files)
+(defun ox-blorg-manipulate-sitemap-files (files)
   "Transform the FILES of :sitemap-function into a better form."
   (when files
     (cond
      ((symbolp (car files))
-      (mapcar #'blorg-manipulate-sitemap-files (cdr files)))
+      (mapcar #'ox-blorg-manipulate-sitemap-files (cdr files)))
      ((and (stringp (car files)) (cdr files))
-      (cons (car files) (blorg-manipulate-sitemap-files (cadr files))))
+      (cons (car files) (ox-blorg-manipulate-sitemap-files (cadr files))))
      ((and (stringp (car files)))
       (car files)))))
 
-(defun blorg-manipulate-sitemap-separate-files (files &optional subsequent-run)
+(defun ox-blorg-manipulate-sitemap-separate-files (files &optional subsequent-run)
   "Separate the FILES from the directories."
   (when files
     (let ((files (remove nil
@@ -132,11 +132,11 @@
                                (mapcar (lambda (x) (when (listp x) x)) files))))
       (cons files directories))))
 
-(defun blorg-format-directory-for-sitemap (entry)
+(defun ox-blorg-format-directory-for-sitemap (entry)
   "Format a directory for the sitemap."
   (capitalize (replace-regexp-in-string "-" " " entry)))
 
-(defun blorg-render-sitemap-item (item depth)
+(defun ox-blorg-render-sitemap-item (item depth)
   "Render according to DEPTH and type of ITEM (file or directory)."
   (concat
    (if (> depth 0)
@@ -144,18 +144,18 @@
      "")
    (format "- %s\n"
            (if (not (string-prefix-p "[[file:" item))
-               (blorg-format-directory-for-sitemap item)
-             ;; Files have their file: links replaced with blorg:
+               (ox-blorg-format-directory-for-sitemap item)
+             ;; Files have their file: links replaced with ox-blorg:
              ;; links.
-             (concat "[[blorg:"
+             (concat "[[ox-blorg:"
                      (substring item (length "[[file:")))))))
 
-(defun blorg-render-sitemap-from-files (files &optional depth subsequent-run)
+(defun ox-blorg-render-sitemap-from-files (files &optional depth subsequent-run)
   "Render the sitemap list from FILES."
   (if (null files)
       ""
     (let* ((depth (or depth 0))
-           (all-files (blorg-manipulate-sitemap-separate-files files))
+           (all-files (ox-blorg-manipulate-sitemap-separate-files files))
            (top-files (if (not subsequent-run)
                           (car all-files)
                         (cdar all-files)))
@@ -165,23 +165,23 @@
       (concat
        (if (null top-directory)
            ""
-         (blorg-render-sitemap-item top-directory (1- depth)))
-       (mapconcat (lambda (f) (blorg-render-sitemap-item f depth))
+         (ox-blorg-render-sitemap-item top-directory (1- depth)))
+       (mapconcat (lambda (f) (ox-blorg-render-sitemap-item f depth))
                   top-files)
-       (mapconcat (lambda (f) (blorg-render-sitemap-from-files f (1+ depth) t))
+       (mapconcat (lambda (f) (ox-blorg-render-sitemap-from-files f (1+ depth) t))
                   directories)))))
 
-(defun blorg-sitemap-function (_ files)
+(defun ox-blorg-sitemap-function (_ files)
   "Pass this to :sitemap-function in your project configuration."
   (let ((org-settings (format "#+TITLE: Sitemap\n#+OPTIONS: toc:nil num:nil\n"))
-        (files (blorg-manipulate-sitemap-files files)))
+        (files (ox-blorg-manipulate-sitemap-files files)))
     (concat
      org-settings
-     (blorg-render-sitemap-from-files files))))
+     (ox-blorg-render-sitemap-from-files files))))
 
 ;;;; Src-block
 
-(defun blorg-html-src-block (src-block _contents info)
+(defun ox-blorg-html-src-block (src-block _contents info)
   "Transcode an SRC-BLOCK element from Org to HTML."
   (let* ((lang (org-element-property :language src-block))
 	 (code (org-html-format-code src-block info))
@@ -209,7 +209,7 @@
 
 ;;;; Italic
 
-(defun blorg-html-italic (italic contents info)
+(defun ox-blorg-html-italic (italic contents info)
   "Transcode ITALIC from Org to HTML for a blog.
 Italicize if in title, otherwise emphasize."
   (let* ((markup (plist-get info :html-text-markup-alist))
@@ -224,7 +224,7 @@ Italicize if in title, otherwise emphasize."
 
 ;;;; Headline
 
-(defun blorg-html-headline (headline contents info)
+(defun ox-blorg-html-headline (headline contents info)
   "Transcode a HEADLINE from Org to HTML for a blog.
 Do as ox-html does, but also include the DONE timestamp."
   (let ((todo (org-element-property :todo-keyword headline))
@@ -233,13 +233,13 @@ Do as ox-html does, but also include the DONE timestamp."
     (if (and (string= todo "DONE") closed-timestamp)
         (replace-regexp-in-string
          (regexp-quote "DONE</span>")
-         (format "DONE(%s)</span>" (blorg-time-element-from-timestamp closed-timestamp info))
+         (format "DONE(%s)</span>" (ox-blorg-time-element-from-timestamp closed-timestamp info))
          html-headline)
       html-headline)))
 
 ;;;; Timestamp
 
-(defun blorg-html-timestamp (timestamp _ info)
+(defun ox-blorg-html-timestamp (timestamp _ info)
   "Transcode a TIMESTAMP from Org to HTML for a blog.
 Do as ox-html does, but include the semantic <time> element."
   (let ((date (org-html-plain-text (org-timestamp-translate timestamp) info))
@@ -250,10 +250,10 @@ Do as ox-html does, but include the semantic <time> element."
 
 ;;;; Bibliography
 
-(defvar blorg-bibliography-hook-added nil
+(defvar ox-blorg-bibliography-hook-added nil
   "Track if the hook to attach bibliography has been added.")
 
-(defun blorg-attach-bibliography (backend)
+(defun ox-blorg-attach-bibliography (backend)
   "Attach relevant bibliographic information to current buffer."
   ;; Write #+print_bibliography: at end unless already existing. Do
   ;; not write it if no citations have been made.
@@ -263,19 +263,19 @@ Do as ox-html does, but include the semantic <time> element."
     (unless (bolp) (insert "\n"))
     (insert "* References\n#+print_bibliography:\n")))
 
-(unless blorg-bibliography-hook-added
-  (add-hook 'org-export-before-processing-functions #'blorg-attach-bibliography)
-  (setq blorg-bibliography-hook-added t))
+(unless ox-blorg-bibliography-hook-added
+  (add-hook 'org-export-before-processing-functions #'ox-blorg-attach-bibliography)
+  (setq ox-blorg-bibliography-hook-added t))
 
 ;;;; LaTeX macros
 
-(defvar blorg-latex-hook-added nil
+(defvar ox-blorg-latex-hook-added nil
   "Track if the hook to attach LaTeX macros has been added.")
 
-(defun blorg-attach-latex (backend)
+(defun ox-blorg-attach-latex (backend)
   "Attach LaTeX macro template to current buffer."
   (let* ((root-dir (locate-dominating-file "." "index.org"))
-         (macro-file (concat (if root-dir (blorg-ensure-suffix "/" root-dir) "")
+         (macro-file (concat (if root-dir (ox-blorg-ensure-suffix "/" root-dir) "")
                              "latex-template")))
     (when (file-readable-p macro-file)
       (re-search-forward "^[^#+]" nil t)
@@ -283,14 +283,14 @@ Do as ox-html does, but include the semantic <time> element."
       (insert
        (format "#+INCLUDE: %s\n" macro-file)))))
 
-(unless blorg-latex-hook-added
-  (add-hook 'org-export-before-processing-functions #'blorg-attach-latex)
-  (setq blorg-latex-hook-added t))
+(unless ox-blorg-latex-hook-added
+  (add-hook 'org-export-before-processing-functions #'ox-blorg-attach-latex)
+  (setq ox-blorg-latex-hook-added t))
 
 ;;;; MathJax
 
 ;; This is taken from ox-html
-(defun blorg-html-build-mathjax-config (info)
+(defun ox-blorg-html-build-mathjax-config (info)
   "Insert the user setup into the mathjax template."
   (if (not (and (memq (plist-get info :with-latex) '(mathjax t))
                 (org-element-map (plist-get info :parse-tree)
@@ -302,7 +302,7 @@ Do as ox-html does, but include the semantic <time> element."
            (mathjax-path (alist-get 'path options)))
       (if mathjax-path
           (setf (alist-get 'path options)
-                (list (blorg-replace-root-link (car mathjax-path) info))))
+                (list (ox-blorg-replace-root-link (car mathjax-path) info))))
       (dolist (e options (org-element-normalize-string template))
         (let ((symbol (car e))
               (value (cadr e)))
@@ -319,8 +319,8 @@ Do as ox-html does, but include the semantic <time> element."
 
 ;;;;; Doctype and HTML elements
 
-(defun blorg-html-template-document (part info)
-  "The Blorg HTML document template."
+(defun ox-blorg-html-template-document (part info)
+  "The Ox-Blorg HTML document template."
   (cond
    ((eq part 'begin)
     "<!doctype html>
@@ -331,9 +331,9 @@ Do as ox-html does, but include the semantic <time> element."
 
 ;;;;; Head element
 
-(defun blorg-html-template-head (part info)
-  "The Blorg HTML head element template."
-  (let ((blorg-root (blorg-get-root info))
+(defun ox-blorg-html-template-head (part info)
+  "The Ox-Blorg HTML head element template."
+  (let ((ox-blorg-root (ox-blorg-get-root info))
         (html-head (or (plist-get info :html-head) "")))
     (cond
      ((eq part 'begin)
@@ -345,17 +345,17 @@ Do as ox-html does, but include the semantic <time> element."
   %s
   %s
 </head>"
-       (blorg-html-aux-title info)
-       (blorg-html-build-mathjax-config info)
-       (blorg-replace-root-link html-head info)))
+       (ox-blorg-html-aux-title info)
+       (ox-blorg-html-build-mathjax-config info)
+       (ox-blorg-replace-root-link html-head info)))
      ((eq part 'end)
       "")
      (t ""))))
 
 ;;;;; Body element
 
-(defun blorg-html-template-body (part info)
-  "The Blorg HTML body element template."
+(defun ox-blorg-html-template-body (part info)
+  "The Ox-Blorg HTML body element template."
   (cond
    ((eq part 'begin)
     "<body>")
@@ -365,8 +365,8 @@ Do as ox-html does, but include the semantic <time> element."
 
 ;;;;; Main element
 
-(defun blorg-html-template-main (part info)
-  "The Blorg HTML main and article element template."
+(defun ox-blorg-html-template-main (part info)
+  "The Ox-Blorg HTML main and article element template."
   (cond
    ((eq part 'begin)
     "<main>
@@ -378,8 +378,8 @@ Do as ox-html does, but include the semantic <time> element."
 
 ;;;;; Footer element
 
-(defun blorg-html-template-footer (part info)
-  "The Blorg HTML footer element template."
+(defun ox-blorg-html-template-footer (part info)
+  "The Ox-Blorg HTML footer element template."
   (cond
    ((eq part 'begin)
     (format
@@ -393,46 +393,46 @@ Do as ox-html does, but include the semantic <time> element."
 
 ;;;;; Header element
 
-(defun blorg-html-template-header (part info)
-  "The Blorg HTML header element template."
-  (let ((blorg-root (blorg-get-root info))
-        (blorg-header (blorg-get-header info)))
+(defun ox-blorg-html-template-header (part info)
+  "The Ox-Blorg HTML header element template."
+  (let ((ox-blorg-root (ox-blorg-get-root info))
+        (ox-blorg-header (ox-blorg-get-header info)))
     (cond
      ((eq part 'begin)
       (format
        "<header><h1 class=\"article-title\">%s"
-       (blorg-html-aux-title info)))
+       (ox-blorg-html-aux-title info)))
      ((eq part 'end)
       (format "</h1>%s%s</header>"
               (let ((timestamp (and (plist-get info :with-date)
                                     (org-export-get-date info))))
                 (format "<span class=\"article-date\">%s</span>"
                         (if timestamp
-                            (blorg-time-element-from-timestamp (car timestamp) info)
+                            (ox-blorg-time-element-from-timestamp (car timestamp) info)
                           "")))
-              (blorg-replace-root-link blorg-header info)))
+              (ox-blorg-replace-root-link ox-blorg-header info)))
      (t ""))))
 
 ;;;;; Putting it together
 
-(defun blorg-html-template (contents info)
+(defun ox-blorg-html-template (contents info)
   "Return complete document string after HTML conversion."
-  (blorg-html-aux-$<>
+  (ox-blorg-html-aux-$<>
    document info
-   (blorg-html-aux-$<>
+   (ox-blorg-html-aux-$<>
     head info
-    (blorg-html-aux-$<>
+    (ox-blorg-html-aux-$<>
      body info
      (concat
-      (blorg-html-aux-$<> header info "")
+      (ox-blorg-html-aux-$<> header info "")
       "\n"
-      (blorg-html-aux-$<> main info contents)
+      (ox-blorg-html-aux-$<> main info contents)
       "\n"
-      (blorg-html-aux-$<> footer info ""))))))
+      (ox-blorg-html-aux-$<> footer info ""))))))
 
 ;;;; Publish
 
-(defun blorg-html-publish-to-html (plist filename pub-dir)
+(defun ox-blorg-html-publish-to-html (plist filename pub-dir)
   "Publish an org file to HTML.
 
 FILENAME is the filename of the Org file to be published.  PLIST
@@ -440,65 +440,65 @@ is the property list for the given project.  PUB-DIR is the
 publishing directory.
 
 Return output file name."
-  (org-publish-org-to 'blorg-html filename
+  (org-publish-org-to 'ox-blorg-html filename
 		      (concat (when (> (length org-html-extension) 0) ".")
 			      (or (plist-get plist :html-extension)
 				  org-html-extension
 				  "html"))
 		      plist pub-dir))
 
-;;;; Custom blorg links
+;;;; Custom ox-blorg links
 
-(defun blorg-link-export (link description _ info)
-  "Export a blorg page LINK from Org files."
+(defun ox-blorg-link-export (link description _ info)
+  "Export a ox-blorg page LINK from Org files."
   (let* ((new-link (replace-regexp-in-string "\\.org$" ".html" link))
          (desc (or description new-link))
-         (path (concat (blorg-get-root info)
+         (path (concat (ox-blorg-get-root info)
                        new-link)))
     (format "<a href=\"%s\">%s</a>" path desc)))
 
 ;;;;; `locate-dominating-file' for index.org
-(defun blorg-link-follow (path _)
-  "Follow a blorg link from inside the Emacs editor."
+(defun ox-blorg-link-follow (path _)
+  "Follow a ox-blorg link from inside the Emacs editor."
   (let ((root-dir (locate-dominating-file "." "index.org")))
-    (find-file (concat (if root-dir (blorg-ensure-suffix "/" root-dir) "")
+    (find-file (concat (if root-dir (ox-blorg-ensure-suffix "/" root-dir) "")
                        path))))
 
-(org-link-set-parameters "blorg"
-                         :follow #'blorg-link-follow
-                         :export #'blorg-link-export)
+(org-link-set-parameters "ox-blorg"
+                         :follow #'ox-blorg-link-follow
+                         :export #'ox-blorg-link-export)
 
 ;;;; Body filter hook
 
-(defvar blorg-body-hook-added nil
+(defvar ox-blorg-body-hook-added nil
   "Track if the hook to filter body has been added.")
 
 ;; Unfortunately oc-csl adds a <style> element in the body. We remove
 ;; it as style elements shouldn't be placed there. See
 ;; <https://lists.gnu.org/archive/html/emacs-orgmode/2025-05/msg00336.html>
-(defun blorg-body-remove-csl-style (str _ _)
+(defun ox-blorg-body-remove-csl-style (str _ _)
   "Remove <style> (added by oc-csl) from bibliography."
   (replace-regexp-in-string "<style>\\.csl-left-margin[^<]*</style>"
                             ""
                             str))
 
-(unless blorg-body-hook-added
-  (add-hook 'org-export-filter-body-functions #'blorg-body-remove-csl-style)
-  (setq blorg-body-hook-added t))
+(unless ox-blorg-body-hook-added
+  (add-hook 'org-export-filter-body-functions #'ox-blorg-body-remove-csl-style)
+  (setq ox-blorg-body-hook-added t))
 
 ;;;; Define the derived HTML backend
 
 ;;;###autoload
-(defun blorg-html-export-as-html
+(defun ox-blorg-html-export-as-html
     (&optional async subtreep visible-only body-only ext-plist)
   "Export current buffer to an HTML buffer."
   (interactive)
-  (org-export-to-buffer 'blorg-html "*Blorg HTML Export*"
+  (org-export-to-buffer 'ox-blorg-html "*Ox-Blorg HTML Export*"
     async subtreep visible-only body-only ext-plist
     (lambda () (set-auto-mode t))))
 
 ;;;###autoload
-(defun blorg-html-export-to-html
+(defun ox-blorg-html-export-to-html
     (&optional async subtreep visible-only body-only ext-plist)
   "Export current buffer to an HTML file."
   (interactive)
@@ -509,10 +509,10 @@ Return output file name."
 			 "html")))
 	 (file (org-export-output-file-name extension subtreep))
 	 (org-export-coding-system org-html-coding-system))
-    (org-export-to-file 'blorg-html file
+    (org-export-to-file 'ox-blorg-html file
       async subtreep visible-only body-only ext-plist)))
 
-(org-export-define-derived-backend 'blorg-html 'html
+(org-export-define-derived-backend 'ox-blorg-html 'html
   :options-alist
   '((:html-doctype "HTML_DOCTYPE" nil "html5")
     (:html-html5-fancy nil "html5-fancy" t)
@@ -527,25 +527,25 @@ Return output file name."
     (:html-postamble nil "html-postamble" nil)
     (:html-preamble nil "html-preamble" nil)
     (:html-use-infojs nil nil nil)
-    (:blorg-root nil nil nil)
-    (:blorg-header nil nil nil))
+    (:ox-blorg-root nil nil nil)
+    (:ox-blorg-header nil nil nil))
   :menu-entry
-  '(?b "Export to Blorg HTML"
-       ((?H "As HTML buffer" blorg-html-export-as-html)
-	(?h "As HTML file" blorg-html-export-to-html)
+  '(?b "Export to Ox-Blorg HTML"
+       ((?H "As HTML buffer" ox-blorg-html-export-as-html)
+	(?h "As HTML file" ox-blorg-html-export-to-html)
 	(?o "As HTML file and open"
 	    (lambda (a s v b)
-	      (if a (blorg-html-export-to-html t s v b)
-		(org-open-file (blorg-html-export-to-html nil s v b)))))))
+	      (if a (ox-blorg-html-export-to-html t s v b)
+		(org-open-file (ox-blorg-html-export-to-html nil s v b)))))))
   :translate-alist
-  '((italic . blorg-html-italic)
-    (src-block . blorg-html-src-block)
-    (headline . blorg-html-headline)
-    (timestamp . blorg-html-timestamp)
-    (template . blorg-html-template)))
+  '((italic . ox-blorg-html-italic)
+    (src-block . ox-blorg-html-src-block)
+    (headline . ox-blorg-html-headline)
+    (timestamp . ox-blorg-html-timestamp)
+    (template . ox-blorg-html-template)))
 
-(provide 'blorg)
+(provide 'ox-blorg)
 
 ;; End:
 
-;;; blorg.el ends here
+;;; ox-blorg.el ends here
