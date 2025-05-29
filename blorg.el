@@ -417,7 +417,7 @@ Return output file name."
                        new-link)))
     (format "<a href=\"%s\">%s</a>" path desc)))
 
-;;;;; locate-dominating-file for index.org
+;;;;; `locate-dominating-file' for index.org
 (defun org-blorg-link-follow (path _)
   (let ((root-dir (locate-dominating-file "." "index.org")))
     (find-file (concat (if root-dir (ensure-suffix "/" root-dir) "")
