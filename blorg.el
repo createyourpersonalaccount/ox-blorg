@@ -4,13 +4,14 @@
 ;; Author: Nikolaos Chatzikonstantinou
 ;; URL: https://github.com/createyourpersonalaccount/blorg
 ;; Created: 2025
-;; Version: 0.1
-;; Keywords: org blog
-;; Package-Requires: ()
+;; Version: 1.0
+;; Keywords: outlines org blog
+;; Package-Requires: ((emacs "30.1"))
 
 ;;; Commentary:
 ;;
-;; This mode builds on Org to allow you to publish a spiffy blog.
+;; This mode builds on ox-html to allow you to publish a spiffy blog
+;; with Org-publish.
 
 ;;; Code:
 
@@ -23,7 +24,7 @@
 (require 'ox-publish)
 
 (defgroup blorg nil
-  "Your blog in Org"
+  "Your blog in Org."
   :tag "Org Export Blog"
   :group 'org-export)
 
@@ -58,13 +59,13 @@
         "&lrm;"                         ; <title> shouldn't be empty
       title)))
 
-(defun ensure-suffix (suffix string)
+(defun blorg-ensure-suffix (suffix string)
   "Append SUFFIX to STRING unless STRING already ends in SUFFIX."
   (if (string-suffix-p suffix string)
       string
     (concat string suffix)))
 
-(defun time-element-from-timestamp (timestamp info)
+(defun blorg-time-element-from-timestamp (timestamp info)
   "Get an HTML <time> element describing the TIMESTAMP."
   (let* ((date (org-timestamp-format timestamp "%b %d, %Y"))
          (machine-date (and date (org-timestamp-format timestamp "%Y-%m-%d"))))
@@ -77,7 +78,7 @@
   "Grab the :blorg-root string (empty if unspecified)."
   (let ((blorg-root (plist-get info :blorg-root)))
     (if blorg-root
-        (ensure-suffix "/" blorg-root)
+        (blorg-ensure-suffix "/" blorg-root)
       "")))
 
 (defun blorg-get-header (info)
@@ -90,6 +91,7 @@
     (replace-regexp-in-string "blorg:" blorg-root string)))
 
 (defun blorg-mappend (function list)
+  "Apply FUNCTION to elements of LIST and concatenate results."
   (apply #'append (mapcar function list)))
 
 ;;;; Sitemap function
@@ -106,7 +108,7 @@
       (car files)))))
 
 (defun blorg-manipulate-sitemap-separate-files (files &optional subsequent-run)
-  "Separate the files from the directories."
+  "Separate the FILES from the directories."
   (when files
     (let ((files (remove nil
                          (mapcar (lambda (x) (when (stringp x) x)) files)))
@@ -115,7 +117,7 @@
       (cons files directories))))
 
 (defun blorg-format-directory-for-sitemap (entry)
-  "Format a directory for the sitemap"
+  "Format a directory for the sitemap."
   (capitalize (replace-regexp-in-string "-" " " entry)))
 
 (defun blorg-render-sitemap-item (item depth)
@@ -215,13 +217,15 @@ Do as ox-html does, but also include the DONE timestamp."
     (if (and (string= todo "DONE") closed-timestamp)
         (replace-regexp-in-string
          (regexp-quote "DONE</span>")
-         (format "DONE(%s)</span>" (time-element-from-timestamp closed-timestamp info))
+         (format "DONE(%s)</span>" (blorg-time-element-from-timestamp closed-timestamp info))
          html-headline)
       html-headline)))
 
 ;;;; Timestamp
 
 (defun blorg-html-timestamp (timestamp _ info)
+  "Transcode a TIMESTAMP from Org to HTML for a blog.
+Do as ox-html does, but include the semantic <time> element."
   (let ((date (org-html-plain-text (org-timestamp-translate timestamp) info))
         (machine-date (org-timestamp-format timestamp "%Y-%m-%d")))
     (format "<span class=\"timestamp-wrapper\"><span class=\"timestamp\"><time datetime=\"%s\">%s</time></span></span>"
@@ -255,7 +259,7 @@ Do as ox-html does, but also include the DONE timestamp."
 (defun blorg-attach-latex (backend)
   "Attach LaTeX macro template to current buffer."
   (let* ((root-dir (locate-dominating-file "." "index.org"))
-         (macro-file (concat (if root-dir (ensure-suffix "/" root-dir) "")
+         (macro-file (concat (if root-dir (blorg-ensure-suffix "/" root-dir) "")
                              "latex-template")))
     (when (file-readable-p macro-file)
       (re-search-forward "^[^#+]" nil t)
@@ -388,7 +392,7 @@ Do as ox-html does, but also include the DONE timestamp."
                                     (org-export-get-date info))))
                 (format "<span class=\"article-date\">%s</span>"
                         (if timestamp
-                            (time-element-from-timestamp (car timestamp) info)
+                            (blorg-time-element-from-timestamp (car timestamp) info)
                           "")))
               (blorg-replace-root-link blorg-header info)))
      (t ""))))
@@ -429,8 +433,8 @@ Return output file name."
 
 ;;;; Custom blorg links
 
-(defun org-blorg-link-export (link description _ info)
-  "Export a blorg page link from Org files."
+(defun blorg-link-export (link description _ info)
+  "Export a blorg page LINK from Org files."
   (let* ((new-link (replace-regexp-in-string "\\.org$" ".html" link))
          (desc (or description new-link))
          (path (concat (blorg-get-root info)
@@ -438,14 +442,15 @@ Return output file name."
     (format "<a href=\"%s\">%s</a>" path desc)))
 
 ;;;;; `locate-dominating-file' for index.org
-(defun org-blorg-link-follow (path _)
+(defun blorg-link-follow (path _)
+  "Follow a blorg link from inside the Emacs editor."
   (let ((root-dir (locate-dominating-file "." "index.org")))
-    (find-file (concat (if root-dir (ensure-suffix "/" root-dir) "")
+    (find-file (concat (if root-dir (blorg-ensure-suffix "/" root-dir) "")
                        path))))
 
 (org-link-set-parameters "blorg"
-                         :follow #'org-blorg-link-follow
-                         :export #'org-blorg-link-export)
+                         :follow #'blorg-link-follow
+                         :export #'blorg-link-export)
 
 ;;;; Body filter hook
 
