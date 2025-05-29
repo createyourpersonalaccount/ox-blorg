@@ -1,10 +1,10 @@
-;;; blorg.el --- Your blog in Org
+;;; blorg.el --- Your blog in Org -*- lexical-binding: t; -*-
 
 ;; Copyright (C) 2025 Nikolaos Chatzikonstantinou <nchatz314@gmail.com>
 ;; Author: Nikolaos Chatzikonstantinou
 ;; URL: https://github.com/createyourpersonalaccount/blorg
 ;; Created: 2025
-;; Version: 1.0
+;; Version: 1.0.1
 ;; Keywords: outlines org blog
 ;; Package-Requires: ((emacs "30.1"))
 
