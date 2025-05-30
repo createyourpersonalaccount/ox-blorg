@@ -20,7 +20,7 @@
 ;; Author: Nikolaos Chatzikonstantinou
 ;; URL: https://github.com/createyourpersonalaccount/ox-blorg
 ;; Created: 2025
-;; Version: 1.1.3
+;; Version: 1.1.4
 ;; Keywords: outlines org blog
 ;; Package-Requires: ((emacs "30.1"))
 
@@ -292,7 +292,7 @@ Do as ox-html does, but include the semantic <time> element."
 
 (defun ox-blorg-attach-latex (backend)
   "Attach LaTeX macro template to current buffer."
-  (let* ((root-dir (locate-dominating-file "." "index.org"))
+  (let* ((root-dir (locate-dominating-file "." "publish.el"))
          (macro-file (concat (if root-dir (ox-blorg-ensure-suffix "/" root-dir) "")
                              "latex-template")))
     (when (file-readable-p macro-file)
@@ -475,10 +475,10 @@ Return output file name."
                        new-link)))
     (format "<a href=\"%s\">%s</a>" path desc)))
 
-;;;;; `locate-dominating-file' for index.org
+;;;;; `locate-dominating-file' for publish.el
 (defun ox-blorg-link-follow (path _)
   "Follow a ox-blorg link from inside the Emacs editor."
-  (let ((root-dir (locate-dominating-file "." "index.org")))
+  (let ((root-dir (locate-dominating-file "." "publish.el")))
     (find-file (concat (if root-dir (ox-blorg-ensure-suffix "/" root-dir) "")
                        path))))
 
