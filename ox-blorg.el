@@ -20,7 +20,7 @@
 ;; Author: Nikolaos Chatzikonstantinou
 ;; URL: https://github.com/createyourpersonalaccount/ox-blorg
 ;; Created: 2025
-;; Version: 1.1.1
+;; Version: 1.1.2
 ;; Keywords: outlines org blog
 ;; Package-Requires: ((emacs "30.1"))
 
@@ -126,10 +126,14 @@
 (defun ox-blorg-manipulate-sitemap-separate-files (files &optional subsequent-run)
   "Separate the FILES from the directories."
   (when files
-    (let ((files (remove nil
-                         (mapcar (lambda (x) (when (stringp x) x)) files)))
-          (directories (remove nil
-                               (mapcar (lambda (x) (when (listp x) x)) files))))
+    (let ((files
+           (remove nil
+                   (mapcar (lambda (x) (when (stringp x) x)) files)))
+          (directories
+           ;; Sort directories alphabetically.
+           (sort (remove nil
+                         (mapcar (lambda (x) (when (listp x) x)) files))
+                 :key #'car)))
       (cons files directories))))
 
 (defun ox-blorg-format-directory-for-sitemap (entry)
