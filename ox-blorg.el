@@ -20,7 +20,7 @@
 ;; Author: Nikolaos Chatzikonstantinou
 ;; URL: https://github.com/createyourpersonalaccount/ox-blorg
 ;; Created: 2025
-;; Version: 1.1.2
+;; Version: 1.1.3
 ;; Keywords: outlines org blog
 ;; Package-Requires: ((emacs "30.1"))
 
@@ -110,6 +110,14 @@
   "Apply FUNCTION to elements of LIST and concatenate results."
   (apply #'append (mapcar function list)))
 
+(defun blorg-extract-date-from-org-file (file)
+  "Extract the #+DATE: from an Org FILE."
+  (with-temp-buffer
+    (insert-file-contents file)
+    (if (re-search-forward "^#\\+DATE:[ \t]*\\(.*\\)$" nil t)
+        (org-read-date nil nil (match-string 1))
+      nil)))
+
 ;;;; Sitemap function
 
 (defun ox-blorg-manipulate-sitemap-files (files)
@@ -150,9 +158,15 @@
            (if (not (string-prefix-p "[[file:" item))
                (ox-blorg-format-directory-for-sitemap item)
              ;; Files have their file: links replaced with blorg:
-             ;; links.
-             (concat "[[blorg:"
-                     (substring item (length "[[file:")))))))
+             ;; links, and their #+DATE: added next to their entry.
+             (let* ((slice (substring item (length "[[file:")))
+                    (file (substring slice 0 (string-match "\\]" slice)))
+                    (date (blorg-extract-date-from-org-file file)))
+               (concat "[[blorg:"
+                       slice
+                       (if (not date)
+                           ""
+                         (format ", [%s]" date))))))))
 
 (defun ox-blorg-render-sitemap-from-files (files &optional depth subsequent-run)
   "Render the sitemap list from FILES."
