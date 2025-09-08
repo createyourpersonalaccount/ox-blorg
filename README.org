@@ -1,0 +1,5 @@
+#+title: HTML5 export backend for Emacs orgmode
+
+An example setup using this backend is available at [[https://github.com/createyourpersonalaccount/blog][createyourpersonalaccount/blog]].
+
+That example code is the source for the [[https://createyourpersonalaccount.github.io/blog/][blog of Nikolaos Chatzikonstantinou]].
