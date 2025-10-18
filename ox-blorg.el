@@ -202,7 +202,9 @@
 (defun ox-blorg-html-src-block (src-block _contents info)
   "Transcode an SRC-BLOCK element from Org to HTML."
   (let* ((lang (org-element-property :language src-block))
-	 (code (org-html-format-code src-block info))
+         ;; Strip leading newlines left by noweb strip.
+	 (code (string-trim-left (org-html-format-code src-block info)
+                                 "[\n]+"))
 	 (label (let ((lbl (org-html--reference src-block info t)))
 		  (if lbl (format " id=\"%s\"" lbl) ""))))
     (format "<div class=\"org-src-container\">\n%s%s\n</div>"
