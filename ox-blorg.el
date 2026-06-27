@@ -292,6 +292,9 @@ Do as ox-html does, but include the semantic <time> element."
 (defvar ox-blorg-latex-hook-added nil
   "Track if the hook to attach LaTeX macros has been added.")
 
+;;; BUG: LaTeX commands used in the ToC will not be displayed
+;;; correctly because this function will use #+INCLUDE: which inserts
+;;; after ToC.
 (defun ox-blorg-attach-latex (backend)
   "Attach LaTeX macro template to current buffer."
   (let* ((root-dir (locate-dominating-file "." "publish.el"))
