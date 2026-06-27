@@ -287,29 +287,6 @@ Do as ox-html does, but include the semantic <time> element."
   (add-hook 'org-export-before-processing-functions #'ox-blorg-attach-bibliography)
   (setq ox-blorg-bibliography-hook-added t))
 
-;;;; LaTeX macros
-
-(defvar ox-blorg-latex-hook-added nil
-  "Track if the hook to attach LaTeX macros has been added.")
-
-;;; BUG: LaTeX commands used in the ToC will not be displayed
-;;; correctly because this function will use #+INCLUDE: which inserts
-;;; after ToC.
-(defun ox-blorg-attach-latex (backend)
-  "Attach LaTeX macro template to current buffer."
-  (let* ((root-dir (locate-dominating-file "." "publish.el"))
-         (macro-file (concat (if root-dir (ox-blorg-ensure-suffix "/" root-dir) "")
-                             "latex-template")))
-    (when (file-readable-p macro-file)
-      (re-search-forward "^[^#+]" nil t)
-      (beginning-of-line)
-      (insert
-       (format "#+INCLUDE: %s\n" macro-file)))))
-
-(unless ox-blorg-latex-hook-added
-  (add-hook 'org-export-before-processing-functions #'ox-blorg-attach-latex)
-  (setq ox-blorg-latex-hook-added t))
-
 ;;;; MathJax
 
 ;; This is taken from ox-html
