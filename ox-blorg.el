@@ -20,7 +20,7 @@
 ;; Author: Nikolaos Chatzikonstantinou
 ;; URL: https://github.com/createyourpersonalaccount/ox-blorg
 ;; Created: 2025
-;; Version: 1.1.4
+;; Version: 1.1.5
 ;; Keywords: outlines org blog
 ;; Package-Requires: ((emacs "30.1"))
 
@@ -207,7 +207,10 @@
                                  "[\n]+"))
 	 (label (let ((lbl (org-html--reference src-block info t)))
 		  (if lbl (format " id=\"%s\"" lbl) ""))))
-    (format "<div class=\"org-src-container\">\n%s%s\n</div>"
+    (format "<div %sclass=\"org-src-container\">\n%s%s\n</div>"
+            ;; The programming language.
+            (if (not lang) ""
+              (format "data-lang=\"%s\" " lang))
 	    ;; Build caption.
 	    (let ((caption (org-export-get-caption src-block)))
 	      (if (not caption) ""
@@ -224,8 +227,8 @@
 			  listing-number
 			  (org-trim (org-export-data caption info))))))
 	    ;; Contents.
-            (format "<pre class=\"src src-%s\"%s><code>%s</code></pre>"
-                    lang label code))))
+            (format "<pre class=\"src\"%s><code>%s</code></pre>"
+                    label code))))
 
 ;;;; Italic
 
