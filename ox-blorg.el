@@ -20,7 +20,7 @@
 ;; Author: Nikolaos Chatzikonstantinou
 ;; URL: https://github.com/createyourpersonalaccount/ox-blorg
 ;; Created: 2025
-;; Version: 1.1.5
+;; Version: 1.1.6
 ;; Keywords: outlines org blog
 ;; Package-Requires: ((emacs "30.1"))
 
@@ -270,6 +270,28 @@ Do as ox-html does, but include the semantic <time> element."
     (format "<span class=\"timestamp-wrapper\"><span class=\"timestamp\"><time datetime=\"%s\">%s</time></span></span>"
             machine-date
 	    (replace-regexp-in-string "--" "&#x2013;" date))))
+
+;;;; Drawer
+
+(defcustom ox-blorg-callout-drawers '("NOTE" "WARNING")
+  "Drawer names (upcased) that export as callout boxes."
+  :type '(repeat string)
+  :group 'ox-blorg)
+
+(defun ox-blorg-html-drawer (drawer contents _)
+  "Transcode a DRAWER element from Org to HTML for a blog.
+Drawers named in `ox-blorg-callout-drawers' become callout
+boxes; other drawers export as plain divs like ox-html does."
+  (let ((name (org-element-property :drawer-name drawer)))
+    (if (member (upcase name) ox-blorg-callout-drawers)
+        (format (concat "<aside class=\"callout callout-%s\">\n"
+                        "<p class=\"callout-title\">%s</p>\n"
+                        "%s</aside>")
+                (downcase name)
+                (capitalize name)
+                (or contents ""))
+      ;; Fall back to ox-html's default drawer rendering.
+      (format "<div class=\"%s\">\n%s</div>" (downcase name) (or contents "")))))
 
 ;;;; Bibliography
 
@@ -541,11 +563,12 @@ Return output file name."
 	      (if a (ox-blorg-html-export-to-html t s v b)
 		(org-open-file (ox-blorg-html-export-to-html nil s v b)))))))
   :translate-alist
-  '((italic . ox-blorg-html-italic)
+  '((italic    . ox-blorg-html-italic)
     (src-block . ox-blorg-html-src-block)
-    (headline . ox-blorg-html-headline)
+    (headline  . ox-blorg-html-headline)
     (timestamp . ox-blorg-html-timestamp)
-    (template . ox-blorg-html-template)))
+    (drawer    . ox-blorg-html-drawer)
+    (template  . ox-blorg-html-template)))
 
 (provide 'ox-blorg)
 
